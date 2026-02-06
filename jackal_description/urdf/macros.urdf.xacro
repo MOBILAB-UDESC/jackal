@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+  <xacro:property name="M_PI" value="3.1415926535897931" />
+
+  <!-- Jackal properties -->
+  <xacro:property name="wheelbase" value="0.262" />
+  <xacro:property name="track" value="0.37559" />
+  <xacro:property name="wheel_vertical_offset" value="0.0345" />
+  <xacro:property name="footprint_vertical_offset" value="-0.0655" />
+  <xacro:property name="wheel_radius" value="0.098" />
+  <xacro:property name="wheel_width" value="0.040" />
+  <xacro:property name="chassis_length" value="0.420" />
+  <xacro:property name="chassis_width" value="0.310" />
+  <xacro:property name="chassis_height" value="0.184" />
+  <xacro:property name="dummy_inertia" value="1e-09" />
+  <xacro:property name="mount_spacing" value="0.120" />
+
+  <material name="dark_grey"><color rgba="0.2 0.2 0.2 1.0" /></material>
+  <material name="light_grey"><color rgba="0.4 0.4 0.4 1.0" /></material>
+  <material name="yellow"><color rgba="0.8 0.8 0.0 1.0" /></material>
+  <material name="black"><color rgba="0.15 0.15 0.15 1.0" /></material>
+
+  <!-- Wheels macro -->
+  <xacro:macro name="wheel" params="
+      *origin
+      prefix
+      wheel_prefix">
+    <link name="${prefix}${wheel_prefix}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+        <geometry>
+          <mesh filename="package://jackal_description/meshes/jackal-wheel.stl" />
+        </geometry>
+        <material name="black" />
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.477" />
+        <inertia
+          ixx="0.0013" ixy="0" ixz="0"
+          iyy="0.0024" iyz="0"
+          izz="0.0013" />
+      </inertial>
+    </link>
+
+    <joint name="${prefix}${wheel_prefix}_wheel_joint" type="continuous">
+      <parent link="${prefix}chassis_link" />
+      <child link="${prefix}${wheel_prefix}_wheel_link" />
+      <xacro:insert_block name="origin" />
+      <axis xyz="0 1 0" />
+    </joint>
+  </xacro:macro>
+
+	<xacro:macro name="wheel_gazebo" params="
+      mu
+      prefix
+      wheel_prefix">
+    <gazebo reference="${prefix}${wheel_prefix}_wheel_link">
+      <material>Gazebo/DarkGrey</material>
+      <selfCollide>false</selfCollide>
+      <mu1 value="${mu}" />
+      <mu2 value="${mu}" />
+      <fdir1 value="1 0 0" />
+    </gazebo>
+    <gazebo>
+      <plugin filename="libgz-sim-wheel-slip-system.so" name="gz::sim::systems::WheelSlip">
+        <wheel link_name="${prefix}${wheel_prefix}_wheel_link">
+          <slip_compliance_lateral>1.0</slip_compliance_lateral>
+          <slip_compliance_longitudinal>1.0</slip_compliance_longitudinal>
+          <wheel_normal_force>40</wheel_normal_force>
+          <wheel_radius>${wheel_radius}</wheel_radius>
+        </wheel>
+      </plugin>
+    </gazebo>
+	</xacro:macro>
+
+</robot>

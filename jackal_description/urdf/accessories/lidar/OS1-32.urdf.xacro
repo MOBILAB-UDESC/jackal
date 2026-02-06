@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="OS1-32" params="
+      *origin
+      hz:=10
+      imu_link:=os_imu
+      lasers:=32
+      lidar_link:=lidar_link
+      min_angle:=-${M_PI}
+      max_angle:=${M_PI}
+      min_range:=0.3
+      max_range:=75.0
+      noise:=0.008
+      name:=os_sensor
+      parent:=base_link
+      prefix
+      samples:=1024
+      sim_gazebo
+      topic_points:=ouster
+      topic_imu:=ouster/imu
+      vfov_min:=-.393
+      vfov_max:=.393">
+    <joint name="${prefix}${name}_mount_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${prefix}${parent}" />
+      <child link="${prefix}${name}_base_link" />
+    </joint>
+
+    <link name="${prefix}${name}_base_link" />
+
+    <joint name="${prefix}${name}_base_to_baseplate" type="fixed">
+      <parent link="${prefix}${name}_base_link" />
+      <child link="${prefix}${name}_baseplate" />
+      <origin xyz="0 0 0.008" />
+    </joint>
+
+    <link name="${prefix}${name}_baseplate">
+      <visual>
+        <geometry>
+          <box size="0.112 0.112 0.016" />
+        </geometry>
+        <material name="silver">
+          <color rgba="0.5 0.5 0.5 1.0" />
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.112 0.112 0.016" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}${name}_baseplate_to_body" type="fixed">
+      <parent link="${prefix}${name}_baseplate" />
+      <child link="${prefix}${name}" />
+      <origin xyz="0 0 0.042" rpy="0 0 0" />
+    </joint>
+
+    <link name="${prefix}${name}">
+      <inertial>
+        <mass value="0.33" />
+        <origin xyz="0 0 0.0365" rpy="0 0 0" />
+        <inertia
+          ixx="0.000241148" ixy="0" ixz="0"
+          iyy="0.000241148" iyz="0"
+          izz="0.000264" />
+      </inertial>
+      <collision name="base_collision">
+        <origin xyz="0 0 0.0365" rpy="0 0 0" />
+        <geometry>
+          <cylinder radius="0.04" length="0.073" />
+        </geometry>
+      </collision>
+      <visual name="base_visual">
+        <origin xyz="0 0 0.0" rpy="0 0 1.5707" />
+        <geometry>
+          <!-- <cylinder radius="0.04" length="0.073" /> -->
+          <mesh filename="package://jackal_description/meshes/os1_64.dae" />
+        </geometry>
+      </visual>
+    </link>
+
+    <link name="${prefix}${imu_link}" />
+
+    <link name="${prefix}${lidar_link}" />
+
+    <joint name="${prefix}${name}_imu_link_joint" type="fixed">
+      <parent link="${prefix}${name}" />
+      <child link="${prefix}${imu_link}" />
+      <origin xyz="0.006253 -0.011775 0.007645" rpy="0 0 0" />
+    </joint>
+    <gazebo reference="${prefix}${imu_link}">
+    </gazebo>
+
+    <joint name="${prefix}${name}_lidar_link_joint" type="fixed">
+      <parent link="${prefix}${name}" />
+      <child link="${prefix}${lidar_link}" />
+      <origin xyz="0.0 0.0 0.03618" rpy="0 0 0" />
+    </joint>
+
+    <!-- gazebo lidar -->
+    <xacro:if value="${sim_gazebo}">
+      <gazebo reference="${prefix}${name}">
+          <selfCollide>false</selfCollide>
+          <sensor name="${prefix}${name}-OS1-32" type="gpu_lidar">
+              <pose> 0 0 0 0 0 0 </pose>
+              <always_on>true</always_on>
+              <update_rate>${hz}</update_rate>
+              <visualize>false</visualize>
+              <gz_frame_id>${prefix}${lidar_link}</gz_frame_id>
+              <topic>${prefix}${topic_points}</topic>
+              <lidar>
+                  <scan>
+                    <horizontal>
+                      <samples>${samples}</samples>
+                      <resolution>1</resolution>
+                      <min_angle>${min_angle}</min_angle>
+                      <max_angle>${max_angle}</max_angle>
+                    </horizontal>
+                    <vertical>
+                      <samples>${lasers}</samples>
+                      <resolution>1</resolution>
+                      <min_angle>${vfov_min}</min_angle>
+                      <max_angle>${vfov_max}</max_angle>
+                    </vertical>
+                  </scan>
+                  <range>
+                    <min>${min_range}</min>
+                    <max>${max_range}</max>
+                    <resolution>0.03</resolution>
+                  </range>
+              </lidar>
+          </sensor>
+          <mu1>0.1</mu1>
+          <mu2>0.1</mu2>
+      </gazebo>
+    </xacro:if>
+
+  </xacro:macro>
+</robot>
+
+    <!-- IMU -->
+  <!-- <gazebo reference="${imu_link}">
+      <gravity>true</gravity>
+      <sensor name="imu_controller" type="imu">
+          <always_on>true</always_on>
+          <update_rate>50</update_rate>
+          <visualize>true</visualize>
+          <topic>${topic_imu}</topic>
+          <gz_frame_id>${imu_link}</gz_frame_id>
+
+          <imu>
+              <noise>
+                  <type>gaussian</type>
+                  <rate>
+                      <mean>0.0</mean>
+                      <stddev>${0.0014*0.0014}</stddev>
+                      <bias_mean>0.0</bias_mean>
+                      <bias_stddev>0.0</bias_stddev>
+                  </rate>
+                      <accel>
+                          <mean>0.0</mean>
+                          <stddev>1.7e-2</stddev>
+                          <bias_mean>0.1</bias_mean>
+                          <bias_stddev>0.001</bias_stddev>
+                      </accel>
+              </noise>
+              <frame_id>${imu_link}</frame_id>
+          </imu>
+
+      </sensor>
+    </gazebo> -->
