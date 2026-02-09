@@ -20,7 +20,7 @@ def generate_launch_description():
             'serial',
             '--dev',
             '/dev/clearpath/j100',
-        ],
+        ]
     )
 
     namespace = LaunchConfiguration('namespace')
@@ -45,12 +45,45 @@ def generate_launch_description():
         ]
     )
 
+    imu_remap_node = Node(
+        package='topic_tools',
+        executable='relay',
+        name='relay_imu_node',
+        output='screen',
+        arguments=[
+            [namespace, '/sensors/imu_0/data_raw'], 'imu_0/data_raw'
+        ]
+
+    )
+
+    mag_remap_node = Node(
+        package='topic_tools',
+        executable='relay',
+        name='relay_mag_node',
+        output='screen',
+        arguments=[
+            [namespace, '/sensors/imu_0/magnetic_field'], 'imu_0/mag'
+        ]
+
+    )
+
+    gps_remap_node = Node(
+        package='topic_tools',
+        executable='relay',
+        name='relay_gps_node',
+        output='screen',
+        arguments=[
+            [namespace, '/sensors/gps_0/nmea_sentence'], 'gps_0/nmea_sentence'
+        ]
+
+    )
+
     args = [
         DeclareLaunchArgument(
             'domain_id',
             default_value='7',
             description='DDS domain id'
-        ).
+        ),
         DeclareLaunchArgument(
             'namespace',
             default_value='j100_0929',
@@ -61,5 +94,8 @@ def generate_launch_description():
     return LaunchDescription([
         *args,
         node_micro_ros_agent,
-        process_configure_mcu
+        process_configure_mcu,
+        imu_remap_node,
+        mag_remap_node,
+        gps_remap_node
     ])
