@@ -19,11 +19,16 @@ def generate_launch_description():
     """Launch Gazebo world and bridge clock topic."""
     bringup_pkf_path = get_package_share_directory("jackal_bringup")
 
-    packages_paths = [os.path.join(p, 'share') for p in os.getenv('AMENT_PREFIX_PATH').split(':')]
+    ament_prefix_path = os.getenv("AMENT_PREFIX_PATH", "")
+    packages_paths = [os.path.join(p, 'share') for p in ament_prefix_path.split(':')]
 
     gz_sim_resource_path = SetEnvironmentVariable(
         name='GZ_SIM_RESOURCE_PATH',
-        value=[':' + ':'.join(packages_paths)]
+        value=[
+            ':'.join(packages_paths),
+            ':',
+            os.getenv('GZ_SIM_RESOURCE_PATH', "")
+        ]
     )
 
     gazebo_path = PathJoinSubstitution(
