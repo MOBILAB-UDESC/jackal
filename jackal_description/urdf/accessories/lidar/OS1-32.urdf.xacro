@@ -5,7 +5,7 @@
       hz:=10
       imu_link:=os_imu
       lasers:=32
-      lidar_link:=lidar_link
+      lidar_link:=os_lidar
       min_angle:=-${M_PI}
       max_angle:=${M_PI}
       min_range:=0.3

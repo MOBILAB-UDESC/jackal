@@ -108,7 +108,7 @@
     </xacro:wheel>
 
     <!-- Default Internal IMU Link -->
-    <link name="${prefix}imu_link">
+    <link name="${prefix}imu_0_link">
       <inertial>
         <mass value="0.001" />
         <origin xyz="0 0 0" rpy="0 0 0" />
@@ -119,9 +119,9 @@
       </inertial>
     </link>
 
-    <joint name="${prefix}imu_joint" type="fixed">
+    <joint name="${prefix}imu_0_joint" type="fixed">
       <parent link="${prefix}chassis_link" />
-      <child link="${prefix}imu_link" />
+      <child link="${prefix}imu_0_link" />
     </joint>
 
     <!-- Default NAVSAT Link -->
@@ -219,7 +219,7 @@
 
       <xacro:sensor_d435
           add_plug="${add_plug}"
-          name="camera"
+          name="camera_0"
           parent="mid_mount"
           prefix="${prefix}"
           use_mesh="${use_mesh}"
@@ -232,7 +232,6 @@
     <xacro:if value="${use_lidar}">
       <xacro:include filename="$(find jackal_description)/urdf/accessories/lidar/OS1-32.urdf.xacro" />
       <xacro:OS1-32
-          name="os"
           parent="mid_mount"
           prefix="${prefix}"
           sim_gazebo="${sim_gazebo}">
