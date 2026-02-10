@@ -69,6 +69,9 @@ def generate_launch_description():
         namespace='ouster',
         parameters=[sensor_params],
         output='screen',
+        remappings=[
+            ('scan', '/scan'),
+        ],
     )
 
     ouster_configure_event = EmitEvent(
