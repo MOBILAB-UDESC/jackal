@@ -235,7 +235,12 @@
           parent="mid_mount"
           prefix="${prefix}"
           sim_gazebo="${sim_gazebo}">
-        <origin xyz="0.14685 0 0.02564" rpy="0 0 0" />
+        <xacro:if value="${sim_gazebo}">
+          <origin xyz="0.14685 0 0.02564" rpy="0 0 0" />
+        </xacro:if>
+        <xacro:unless value="${sim_gazebo}">
+          <origin xyz="0.14685 0 0.02564" rpy="0 0 ${M_PI}" />
+        </xacro:unless>
       </xacro:OS1-32>
     </xacro:if>
 
