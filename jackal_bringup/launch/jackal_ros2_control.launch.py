@@ -2,18 +2,28 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
+    IncludeLaunchDescription,
     OpaqueFunction,
     RegisterEventHandler
 )
 from launch.conditions import UnlessCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import (
     LaunchConfiguration,
-    PathJoinSubstitution,
-    TextSubstitution,
+    PathJoinSubstitution
 )
 from launch_ros.actions import Node
 from nav2_common.launch import ReplaceString
+import os
+
+
+def replace_prefix(source, prefix_cfg):
+    file = ReplaceString(
+        source_file=source,
+        replacements={'<robot_prefix>': prefix_cfg},
+    )
+    return file
 
 
 def launch_setup(context, *args, **kwargs):
@@ -42,57 +52,51 @@ def launch_setup(context, *args, **kwargs):
             ('platform/motors/cmd_drive', remap_cmd_drive),
             ('platform/motors/feedback', remap_feedback)
         ]
-    print(remappings)
 
-    ros2_control_params = LaunchConfiguration('ros2_control_params')
-
-    ros2_control_params = ReplaceString(
-        source_file=ros2_control_params,
-        replacements={'<robot_prefix>': (LaunchConfiguration('prefix')),
-                      '<robot_prefix>': (LaunchConfiguration('prefix'))},
+    ros2_control_params = replace_prefix(
+        LaunchConfiguration('ros2_control_params'),
+        LaunchConfiguration('prefix')
     )
 
     controller_manager_node = Node(
         condition=UnlessCondition(use_sim_time),
         package='controller_manager',
         executable='ros2_control_node',
-        parameters=[ros2_control_params, {'use_sim_time': use_sim_time}],
         output="both",
+        parameters=[ros2_control_params, {'use_sim_time': use_sim_time}],
         remappings=remappings
     )
 
     joint_state_broadcaster = Node(
         package='controller_manager',
         executable='spawner',
-        output='screen',
         name='joint_state_broadcaster',
+        output='screen',
         arguments=['joint_state_broadcaster'],
         parameters=[{'use_sim_time': use_sim_time}],
         remappings=remappings
     )
 
-    diff_drive_base_controller = Node(
+    jackal_drive_base_controller = Node(
         package='controller_manager',
         executable='spawner',
+        name='jackal_drive_controller',
         output='screen',
-        name='diff_drive_controller',
-        arguments=[f'diff_drive_base_controller', '--param-file', ros2_control_params],
+        arguments=[f'jackal_drive_base_controller', '--param-file', ros2_control_params],
         parameters=[{'use_sim_time': use_sim_time}],
         remappings=remappings
-    )
-
-    joint_to_drive = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster,
-            on_exit=diff_drive_base_controller,
-        )
     )
 
     # Jackal ROS 2 control nodes
     nodes += [
         controller_manager_node,
         joint_state_broadcaster,
-        joint_to_drive
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=joint_state_broadcaster,
+                on_exit=jackal_drive_base_controller,
+            )
+        ),
     ]
 
     # Check if an arm is selected
@@ -102,50 +106,60 @@ def launch_setup(context, *args, **kwargs):
     if not arm_name:
         return nodes
 
-    return nodes
+    # Check for arm-specific setup launch file
+    arm_pkg = get_package_share_directory(f'{arm_name}_description')
+    arm_setup_launch = PathJoinSubstitution(
+        [arm_pkg, 'launch', f'{arm_name}_setup.launch.py']
+    ).perform(context)
 
-    # TODO: Create arm_ros2_controller in arm_bringup package
+    if os.path.exists(arm_setup_launch):
+        arm_setup_node = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(arm_setup_launch),
+            condition=UnlessCondition(use_sim_time),
+        )
+        nodes += [arm_setup_node]
 
     # arms_bringup pkg contains config files for all supported arms + grippers
-    # arm_bringup_pkg_path = get_package_share_directory('arms_bringup')
+    arm_bringup_pkg_path = get_package_share_directory('arms_bringup')
+    arm_ros2_control_params = replace_prefix(
+        PathJoinSubstitution([arm_bringup_pkg_path, 'config', 'ros2_control.yaml']),
+        LaunchConfiguration('arm_prefix')
+    )
 
-    # # Replace the <robot_prefix> placeholder in the ros2_control.yaml file with the arm_prefix arg.
-    # ros2_control_params = PathJoinSubstitution(
-    #     [arm_bringup_pkg_path, 'config', 'ros2_control.yaml'])
-    # ros2_control_params = ReplaceString(
-    #     source_file=ros2_control_params,
-    #     replacements={'<robot_prefix>': (LaunchConfiguration('arm_prefix', default=''))},
-    # )
+    arm_controller = Node(
+        package='controller_manager',
+        executable='spawner',
+        name=f'{arm_name}_trajectory_controller',
+        output='screen',
+        arguments=[f'{arm_name}_arm_controller', '--param-file', arm_ros2_control_params],
+        parameters=[{'use_sim_time': use_sim_time}],
+    )
+    nodes.append(arm_controller)
 
-    # arm_controller = Node(
-    #     package='controller_manager',
-    #     executable='spawner',
-    #     output='screen',
-    #     name='joint_trajectory_controller',
-    #     arguments=[f'{arm_name}_arm_controller', '--param-file', ros2_control_params],
-    #     parameters=[{'use_sim_time': use_sim_time}],
-    # )
+    if gripper_name:
+        gripper_controller = Node(
+            package='controller_manager',
+            executable='spawner',
+            name=f'{gripper_name}_gripper_controller',
+            output='screen',
+            arguments=[
+                f'{gripper_name}_gripper_controller',
+                '--param-file',
+                arm_ros2_control_params
+            ],
+            parameters=[{'use_sim_time': use_sim_time}],
+        )
 
-    # if gripper_name:
-    #     gripper_controller = Node(
-    #         package='controller_manager',
-    #         executable='spawner',
-    #         output='screen',
-    #         name='gripper_controller',
-    #         arguments=[f'{gripper_name}_gripper_controller', '--param-file', ros2_control_params],
-    #         parameters=[{'use_sim_time': use_sim_time}],
-    #     )
+        nodes.append(
+            RegisterEventHandler(
+                event_handler=OnProcessExit(
+                    target_action=arm_controller,
+                    on_exit=[gripper_controller],
+                )
+            )
+        )
 
-    #     arm_to_gripper = RegisterEventHandler(
-    #         event_handler=OnProcessExit(
-    #             target_action=arm_controller,
-    #             on_exit=[gripper_controller],
-    #         )
-    #     )
-
-    #     return [arm_controller, arm_to_gripper]
-
-    # return [arm_controller]
+    return nodes
 
 
 def generate_launch_description():

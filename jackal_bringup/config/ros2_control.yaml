@@ -9,15 +9,15 @@
 
 /**/controller_manager:
   ros__parameters:
-    update_rate: 50  # Hz
+    update_rate: 100  # Hz
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    diff_drive_base_controller:
+    jackal_drive_base_controller:
       type: diff_drive_controller/DiffDriveController
 
-/**/diff_drive_base_controller:
+/**/jackal_drive_base_controller:
   ros__parameters:
     type: diff_drive_controller/DiffDriveController
     left_wheel_names: ["<robot_prefix>rear_left_wheel_joint", "<robot_prefix>front_left_wheel_joint"]

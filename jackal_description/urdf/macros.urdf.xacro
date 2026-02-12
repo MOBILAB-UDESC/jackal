@@ -54,6 +54,9 @@
       <child link="${prefix}${wheel_prefix}_wheel_link" />
       <xacro:insert_block name="origin" />
       <axis xyz="0 1 0" />
+      <!-- Test arms with rqt-joint-trajectory-controller pkg -->
+      <!-- <limit lower="-${M_PI}" upper="${M_PI}"
+              effort="1000.0" velocity="1000.0" /> -->
     </joint>
   </xacro:macro>
 

@@ -37,17 +37,17 @@ def launch_setup(context, *args, **kwargs):
         Returns:
             list: List of nodes ready for execution.
     """
-    arm = LaunchConfiguration('arm').perform(context)
-    arm_prefix = LaunchConfiguration('arm_prefix').perform(context)
+    arm = LaunchConfiguration('arm')
+    arm_prefix = LaunchConfiguration('arm_prefix')
     gripper = LaunchConfiguration('gripper')
-    prefix = LaunchConfiguration('prefix').perform(context)
     test_urdf = LaunchConfiguration('test_urdf')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
+    prefix = LaunchConfiguration('prefix').perform(context)
     robot_name = 'jackal'
 
     description_pkg_path = get_package_share_directory('jackal_description')
-    bringup_pkf_path = get_package_share_directory('jackal_bringup')
+    bringup_pkg_path = get_package_share_directory('jackal_bringup')
 
     robot_description = Command([
         'xacro ',
@@ -90,7 +90,7 @@ def launch_setup(context, *args, **kwargs):
 
     gazebo_spawn_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [bringup_pkf_path, 'launch', 'jackal_gazebo.launch.py']
+            [bringup_pkg_path, 'launch', 'jackal_gazebo.launch.py']
         )),
         condition=IfCondition(AndSubstitution(use_sim_time, NotSubstitution(test_urdf))),
         launch_arguments={
@@ -104,13 +104,10 @@ def launch_setup(context, *args, **kwargs):
         }.items()
     )
 
-    imu_filter_config = PathJoinSubstitution([bringup_pkf_path, 'config', 'imu_filter.yaml'])
-
     imu_filter_config = ReplaceString(
-        source_file=imu_filter_config,
+        source_file=PathJoinSubstitution([bringup_pkg_path, 'config', 'imu_filter.yaml']),
         replacements={'<robot_prefix>': prefix},
     )
-
     imu_filter_node = Node(
         condition=UnlessCondition(test_urdf),
         package='imu_filter_madgwick',
@@ -131,11 +128,10 @@ def launch_setup(context, *args, **kwargs):
         imu_filter_node,
     ]
 
-    robot_controllers = PathJoinSubstitution([bringup_pkf_path, 'config', 'ros2_control.yaml'])
-
+    robot_controllers = PathJoinSubstitution([bringup_pkg_path, 'config', 'ros2_control.yaml'])
     ros2_control_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [bringup_pkf_path, 'launch', 'jackal_ros2_control.launch.py']
+            [bringup_pkg_path, 'launch', 'jackal_ros2_control.launch.py']
         )),
         condition=UnlessCondition(test_urdf),
         launch_arguments={
@@ -144,15 +140,13 @@ def launch_setup(context, *args, **kwargs):
             'namespace': LaunchConfiguration('namespace'),
             'use_sim_time': use_sim_time,
             'ros2_control_params': robot_controllers,
-            'prefix': prefix,
         }.items()
     )
 
-    ekf_file = PathJoinSubstitution([bringup_pkf_path, 'config', 'ekf.yaml'])
-
+    ekf_file = PathJoinSubstitution([bringup_pkg_path, 'config', 'ekf.yaml'])
     ekf_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [bringup_pkf_path, 'launch', 'jackal_ekf.launch.py']
+            [bringup_pkg_path, 'launch', 'jackal_ekf.launch.py']
         )),
         condition=UnlessCondition(test_urdf),
         launch_arguments={
@@ -168,8 +162,7 @@ def launch_setup(context, *args, **kwargs):
         ekf_node
     ]
 
-    twist_joy_config = PathJoinSubstitution([bringup_pkf_path, 'config', 'twist_joy.yaml'])
-
+    twist_joy_config = PathJoinSubstitution([bringup_pkg_path, 'config', 'twist_joy.yaml'])
     node_joy = Node(
         package='joy_linux',
         executable='joy_linux_node',
@@ -190,8 +183,7 @@ def launch_setup(context, *args, **kwargs):
         ]
     )
 
-    twist_mux_config = PathJoinSubstitution([bringup_pkf_path, 'config', 'twist_mux.yaml'])
-
+    twist_mux_config = PathJoinSubstitution([bringup_pkg_path, 'config', 'twist_mux.yaml'])
     node_twist_mux = Node(
         package='twist_mux',
         executable='twist_mux',
@@ -209,8 +201,7 @@ def launch_setup(context, *args, **kwargs):
         node_twist_mux
     ]
 
-    rviz2_path = PathJoinSubstitution([bringup_pkf_path, 'rviz', 'jackal.rviz'])
-
+    rviz2_path = PathJoinSubstitution([bringup_pkg_path, 'rviz', 'jackal.rviz'])
     rviz2_node = Node(
         condition=IfCondition(LaunchConfiguration('rviz')),
         package='rviz2',
@@ -300,26 +291,10 @@ def generate_launch_description():
             choices=['true', 'false'],
             description='Whether to use simulation time'
         ),
-        DeclareLaunchArgument(
-            'x',
-            default_value='0.0',
-            description='Robot initial pose x'
-        ),
-        DeclareLaunchArgument(
-            'y',
-            default_value='0.0',
-            description='Robot initial pose y'
-        ),
-        DeclareLaunchArgument(
-            'z',
-            default_value='0.06',
-            description='Robot initial pose z'
-        ),
-        DeclareLaunchArgument(
-            'Y',
-            default_value='0.0',
-            description='Robot initial yaw (rotation around Z axis)'
-        ),
+        DeclareLaunchArgument('x', default_value='0.0', description='Robot initial pose x'),
+        DeclareLaunchArgument('y', default_value='0.0', description='Robot initial pose y'),
+        DeclareLaunchArgument('z', default_value='0.06', description='Robot initial pose z'),
+        DeclareLaunchArgument('Y', default_value='0.0', description='Robot initial yaw'),
     ]
 
     # Launch nodes and declared arguments
