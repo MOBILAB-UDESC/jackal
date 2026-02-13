@@ -190,7 +190,7 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
         parameters=[twist_mux_config, {'use_sim_time': use_sim_time}],
         remappings=[
-            ('cmd_vel_out', 'diff_drive_base_controller/cmd_vel'),
+            ('cmd_vel_out', 'jackal_drive_base_controller/cmd_vel'),
         ]
     )
 

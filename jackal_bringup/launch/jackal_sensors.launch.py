@@ -48,7 +48,6 @@ def generate_launch_description():
     ]
 
     bringup_pkg_path = get_package_share_directory('jackal_bringup')
-    ouster_pkg = get_package_share_directory('jackal_bringup')
 
     prefix = LaunchConfiguration('prefix')
     sensor_params = LaunchConfiguration('sensor_params')

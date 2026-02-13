@@ -80,7 +80,7 @@ def launch_setup(context, *args, **kwargs):
     jackal_drive_base_controller = Node(
         package='controller_manager',
         executable='spawner',
-        name='jackal_drive_controller',
+        name='jackal_drive_base_controller',
         output='screen',
         arguments=[f'jackal_drive_base_controller', '--param-file', ros2_control_params],
         parameters=[{'use_sim_time': use_sim_time}],
@@ -117,7 +117,14 @@ def launch_setup(context, *args, **kwargs):
             PythonLaunchDescriptionSource(arm_setup_launch),
             condition=UnlessCondition(use_sim_time),
         )
-        nodes += [arm_setup_node]
+        nodes += [
+            RegisterEventHandler(
+                event_handler=OnProcessExit(
+                    target_action=jackal_drive_base_controller,
+                    on_exit=arm_setup_node,
+                )
+            ),
+        ]
 
     # arms_bringup pkg contains config files for all supported arms + grippers
     arm_bringup_pkg_path = get_package_share_directory('arms_bringup')
@@ -134,7 +141,12 @@ def launch_setup(context, *args, **kwargs):
         arguments=[f'{arm_name}_arm_controller', '--param-file', arm_ros2_control_params],
         parameters=[{'use_sim_time': use_sim_time}],
     )
-    nodes.append(arm_controller)
+    nodes.append(RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=jackal_drive_base_controller,
+            on_exit=arm_controller,
+        )
+    ))
 
     if gripper_name:
         gripper_controller = Node(
