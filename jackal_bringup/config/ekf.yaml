@@ -18,14 +18,14 @@ ekf_filter_node:
         base_link_frame: <robot_prefix>base_link
         world_frame: <robot_prefix>odom
 
-        odom0: diff_drive_base_controller/odom
+        odom0: jackal_drive_base_controller/odom
         odom0_config: [false, false,  false,    # x, y, z
                        false, false, false,     # roll, pitch, yaw
                        true, true, false,       # vx, vy, vz
                        false, false, true,      # vroll, vpitch, vyaw
                        false, false, false]     # ax ,ay, az
 
-        imu0: imu_0/data # imu_0/data_raw for unfiltered data
+        imu0: imu_0/data_raw # imu_0/data_raw for unfiltered data
         imu0_config: [false, false, false,
                       true,  true,  true,
                       false, false, false,
