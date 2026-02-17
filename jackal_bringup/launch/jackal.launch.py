@@ -21,7 +21,7 @@ from launch_ros.actions import Node
 from nav2_common.launch import ReplaceString
 
 
-def launch_setup(context, *args, **kwargs):
+def launch_setup(context):
     """
         Set up and return a list of ROS 2 launch actions for bringing up Jackal.
 
@@ -32,7 +32,7 @@ def launch_setup(context, *args, **kwargs):
         - EKF node
         - Joystick Teleoperation
         - Twist Mux for multiple velocity command sources
-        - Rviz2
+        - Rviz2 (optional)
 
         Returns:
             list: List of nodes ready for execution.
@@ -40,15 +40,16 @@ def launch_setup(context, *args, **kwargs):
     arm = LaunchConfiguration('arm')
     arm_prefix = LaunchConfiguration('arm_prefix')
     gripper = LaunchConfiguration('gripper')
+    prefix = LaunchConfiguration('prefix')
+    robot_name = LaunchConfiguration('robot_name')
+    ros2_control_params = LaunchConfiguration('ros2_control_params')
     test_urdf = LaunchConfiguration('test_urdf')
     use_sim_time = LaunchConfiguration('use_sim_time')
-
-    prefix = LaunchConfiguration('prefix').perform(context)
-    robot_name = 'jackal'
 
     description_pkg_path = get_package_share_directory('jackal_description')
     bringup_pkg_path = get_package_share_directory('jackal_bringup')
 
+    # === Robot Description and State Publishing ===
     robot_description = Command([
         'xacro ',
         PathJoinSubstitution([description_pkg_path, 'urdf', 'jackal.urdf.xacro']),
@@ -74,7 +75,6 @@ def launch_setup(context, *args, **kwargs):
         }],
     )
 
-    # Joint state GUI for testing
     joint_state_publisher_gui = Node(
         condition=IfCondition(test_urdf),
         package='joint_state_publisher_gui',
@@ -82,12 +82,12 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
-    # Add robot description and TF broadcasting
     nodes += [
         robot_state_node,
         joint_state_publisher_gui
     ]
 
+    # === Gazebo Simulation ===
     gazebo_spawn_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
             [bringup_pkg_path, 'launch', 'jackal_gazebo.launch.py']
@@ -104,31 +104,46 @@ def launch_setup(context, *args, **kwargs):
         }.items()
     )
 
-    imu_filter_config = ReplaceString(
-        source_file=PathJoinSubstitution([bringup_pkg_path, 'config', 'imu_filter.yaml']),
-        replacements={'<robot_prefix>': prefix},
-    )
-    imu_filter_node = Node(
-        condition=UnlessCondition(test_urdf),
-        package='imu_filter_madgwick',
-        executable='imu_filter_madgwick_node',
-        name='imu_0_filter_node',
-        output='screen',
-        parameters=[imu_filter_config, {'use_sim_time': use_sim_time}],
-        remappings=[
-            ('imu/data_raw', 'imu_0/data_raw'),
-            ('imu/mag', 'imu_0/mag'),
-            ('imu/data', 'imu_0/data'),
-        ]
-    )
+    if arm.perform(context):
+        arm_sensors_bridge = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution(
+                [get_package_share_directory('arms_bringup'), 'launch', 'arm_gazebo_launch.py']
+            )),
+            condition=IfCondition(AndSubstitution(use_sim_time, NotSubstitution(test_urdf))),
+            launch_arguments={
+                'prefix': arm_prefix,
+                'has_base': 'true',
+                'use_camera': 'true',
+            }.items()
+        )
 
-    # Gazebo simulation
+        # Arm's sensors in simulation
+        nodes += [arm_sensors_bridge]
+
+    # imu_filter_config = ReplaceString(
+    #     source_file=PathJoinSubstitution([bringup_pkg_path, 'config', 'imu_filter.yaml']),
+    #     replacements={'<robot_prefix>': prefix},
+    # )
+    # imu_filter_node = Node(
+    #     condition=UnlessCondition(test_urdf),
+    #     package='imu_filter_madgwick',
+    #     executable='imu_filter_madgwick_node',
+    #     name='imu_0_filter_node',
+    #     output='screen',
+    #     parameters=[imu_filter_config, {'use_sim_time': use_sim_time}],
+    #     remappings=[
+    #         ('imu/data_raw', 'imu_0/data_raw'),
+    #         ('imu/mag', 'imu_0/mag'),
+    #         ('imu/data', 'imu_0/data'),
+    #     ]
+    # )
+
     nodes += [
         gazebo_spawn_node,
-        imu_filter_node,
+        # imu_filter_node,
     ]
 
-    robot_controllers = PathJoinSubstitution([bringup_pkg_path, 'config', 'ros2_control.yaml'])
+    # === ROS 2 Control + Odometry ===
     ros2_control_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
             [bringup_pkg_path, 'launch', 'jackal_ros2_control.launch.py']
@@ -136,14 +151,13 @@ def launch_setup(context, *args, **kwargs):
         condition=UnlessCondition(test_urdf),
         launch_arguments={
             'arm_prefix': arm_prefix,
-            'prefix': prefix,
+            'prefix': prefix.perform(context),
             'namespace': LaunchConfiguration('namespace'),
             'use_sim_time': use_sim_time,
-            'ros2_control_params': robot_controllers,
+            'ros2_control_params': ros2_control_params,
         }.items()
     )
 
-    ekf_file = PathJoinSubstitution([bringup_pkg_path, 'config', 'ekf.yaml'])
     ekf_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
             [bringup_pkg_path, 'launch', 'jackal_ekf.launch.py']
@@ -151,17 +165,16 @@ def launch_setup(context, *args, **kwargs):
         condition=UnlessCondition(test_urdf),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            'ekf_params': ekf_file,
             'prefix': prefix
         }.items()
     )
 
-    # Load ROS 2 control and odometry
     nodes += [
         ros2_control_launch,
         ekf_node
     ]
 
+    # === Teleoperation ===
     twist_joy_config = PathJoinSubstitution([bringup_pkg_path, 'config', 'twist_joy.yaml'])
     node_joy = Node(
         package='joy_linux',
@@ -194,13 +207,13 @@ def launch_setup(context, *args, **kwargs):
         ]
     )
 
-    # Joystick teleoperation
     nodes += [
         node_joy,
         node_teleop_twist_joy,
         node_twist_mux
     ]
 
+    # === Visualization ===
     rviz2_path = PathJoinSubstitution([bringup_pkg_path, 'rviz', 'jackal.rviz'])
     rviz2_node = Node(
         condition=IfCondition(LaunchConfiguration('rviz')),
@@ -211,7 +224,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{'use_sim_time': use_sim_time}],
     )
 
-    # Visualization
     nodes += [rviz2_node]
 
     return nodes
@@ -256,16 +268,21 @@ def generate_launch_description():
             description='Prefix to prepend to all Jackal link and joint names'
         ),
         DeclareLaunchArgument(
+            'robot_name',
+            default_value='jackal',
+            description='Name of the robot.'
+        ),
+        DeclareLaunchArgument(
             'ros2_control_params',
             default_value=PathJoinSubstitution(
                 [get_package_share_directory('jackal_bringup'), 'config', 'ros2_control.yaml']),
-            description='Absolute path to the ROS 2 control configuration YAML file'
+            description='Absolute path to the ROS 2 control configuration YAML file.'
         ),
         DeclareLaunchArgument(
             'rviz',
             default_value='false',
             choices=['true', 'false'],
-            description='Whether to execute rviz2'
+            description='Whether to execute rviz2.'
         ),
         DeclareLaunchArgument(
             'test_urdf',
@@ -277,24 +294,24 @@ def generate_launch_description():
             'use_camera',
             default_value='true',
             choices=['true', 'false'],
-            description='Whether to use a camera'
+            description='Whether to use a camera.'
         ),
         DeclareLaunchArgument(
             'use_lidar',
             default_value='true',
             choices=['true', 'false'],
-            description='Whether to use a lidar'
+            description='Whether to use a lidar.'
         ),
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='true',
             choices=['true', 'false'],
-            description='Whether to use simulation time'
+            description='Whether to use simulation time.'
         ),
-        DeclareLaunchArgument('x', default_value='0.0', description='Robot initial pose x'),
-        DeclareLaunchArgument('y', default_value='0.0', description='Robot initial pose y'),
-        DeclareLaunchArgument('z', default_value='0.06', description='Robot initial pose z'),
-        DeclareLaunchArgument('Y', default_value='0.0', description='Robot initial yaw'),
+        DeclareLaunchArgument('x', default_value='0.0', description='Robot initial pose x.'),
+        DeclareLaunchArgument('y', default_value='0.0', description='Robot initial pose y.'),
+        DeclareLaunchArgument('z', default_value='0.06', description='Robot initial pose z.'),
+        DeclareLaunchArgument('Y', default_value='0.0', description='Robot initial yaw angle.'),
     ]
 
     # Launch nodes and declared arguments
