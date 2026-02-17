@@ -1,3 +1,5 @@
+import os
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
@@ -7,15 +9,14 @@ from launch.actions import (
     RegisterEventHandler
 )
 from launch.conditions import UnlessCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     LaunchConfiguration,
     PathJoinSubstitution
 )
 from launch_ros.actions import Node
 from nav2_common.launch import ReplaceString
-import os
 
 
 def replace_prefix(source, prefix_cfg):
@@ -26,7 +27,7 @@ def replace_prefix(source, prefix_cfg):
     return file
 
 
-def launch_setup(context, *args, **kwargs):
+def launch_setup(context):
     """
         Set up ROS 2 control for Jackal and the selected robotic arm and gripper.
 
@@ -40,6 +41,8 @@ def launch_setup(context, *args, **kwargs):
 
     use_sim_time = LaunchConfiguration('use_sim_time')
     namespace = LaunchConfiguration('namespace')
+    ros2_control_params = LaunchConfiguration('ros2_control_params')
+    prefix = LaunchConfiguration('prefix')
 
     nodes = []
 
@@ -53,10 +56,7 @@ def launch_setup(context, *args, **kwargs):
             ('platform/motors/feedback', remap_feedback)
         ]
 
-    ros2_control_params = replace_prefix(
-        LaunchConfiguration('ros2_control_params'),
-        LaunchConfiguration('prefix')
-    )
+    ros2_control_params = replace_prefix(ros2_control_params, prefix)
 
     controller_manager_node = Node(
         condition=UnlessCondition(use_sim_time),
@@ -100,6 +100,7 @@ def launch_setup(context, *args, **kwargs):
     ]
 
     # Check if an arm is selected
+    arm_prefix = LaunchConfiguration('arm_prefix')
     arm_name = LaunchConfiguration('arm').perform(context)
     gripper_name = LaunchConfiguration('gripper').perform(context)
 
@@ -130,7 +131,7 @@ def launch_setup(context, *args, **kwargs):
     arm_bringup_pkg_path = get_package_share_directory('arms_bringup')
     arm_ros2_control_params = replace_prefix(
         PathJoinSubstitution([arm_bringup_pkg_path, 'config', 'ros2_control.yaml']),
-        LaunchConfiguration('arm_prefix')
+        arm_prefix
     )
 
     arm_controller = Node(
