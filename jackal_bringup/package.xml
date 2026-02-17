@@ -4,7 +4,7 @@
   <name>jackal_bringup</name>
   <version>1.0.0</version>
   <description>
-   Launch and config files for the Jackal platform.
+    Launch and config files for the Jackal platform.
     Supports integration with various robotic arms and grippers.
   </description>
   <maintainer email="nilton.csv18@edu.udesc.br">nilton</maintainer>
@@ -12,8 +12,38 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>xacro</depend>
-  <depend>jackal_description</depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>imu_filter_madgwick</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>joy_linux</exec_depend>
+  <exec_depend>nav2_common</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>teleop_twist_joy</exec_depend>
+  <exec_depend>topic_tools</exec_depend>
+  <exec_depend>twist_mux</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <!-- Real Hardware -->
+  <exec_depend>micro_ros_agent</exec_depend>
+  <exec_depend>ouster_ros</exec_depend>
+  <exec_depend>realsense2_camera</exec_depend>
+  <exec_depend>wireless_watcher</exec_depend>
+
+  <exec_depend>jackal_description</exec_depend>
+  <exec_depend>clearpath_hardware_interfaces</exec_depend>
+
+  <!-- Optional packages -->
+  <exec_depend>gen3_lite_description</exec_depend>
+  <exec_depend>kinova_2f_lite_description</exec_depend>
+  <exec_depend>unitree_d1_description</exec_depend>
+  <exec_depend>d1_2f_description</exec_depend>
+  <exec_depend>unitree_z1_description</exec_depend>
+  <exec_depend>z1_1f_description</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
