@@ -14,14 +14,19 @@ from launch.substitutions import (
 )
 from launch_ros.actions import Node
 
+# Custom worlds in worlds directory.
+AVAILABLE_WORLDS = ['empty', 'mobilab', 'pick_and_place', 'playground']
+DEFAULT_WORLD = 'playground'
+
 
 def generate_launch_description():
     """Launch Gazebo world and bridge clock topic."""
-    bringup_pkf_path = get_package_share_directory('jackal_bringup')
+    bringup_pkg_path = get_package_share_directory('jackal_bringup')
 
     ament_prefix_path = os.getenv('AMENT_PREFIX_PATH', '')
     packages_paths = [os.path.join(p, 'share') for p in ament_prefix_path.split(':')]
 
+    # Ensure gazebo can find models.
     gz_sim_resource_path = SetEnvironmentVariable(
         name='GZ_SIM_RESOURCE_PATH',
         value=[
@@ -32,7 +37,7 @@ def generate_launch_description():
     )
 
     gazebo_world_path = PathJoinSubstitution(
-        [bringup_pkf_path, 'worlds', [LaunchConfiguration('world_name'), '.sdf']])
+        [bringup_pkg_path, 'worlds', [LaunchConfiguration('world_name'), '.sdf']])
 
     gazebo_world_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -60,13 +65,10 @@ def generate_launch_description():
     args = [
         DeclareLaunchArgument(
             'world_name',
-            default_value='empty',
-            choices=[
-                'empty',
-                'mobilab',
-                'playground'
-            ],
-            description='Gazebo world file (custom worlds should be added to the "worlds" folder of this package'
+            default_value=DEFAULT_WORLD,
+            choices=AVAILABLE_WORLDS,
+            description='Gazebo world file to load. '
+            '(custom worlds should be added to the "worlds" folder of this package)'
         ),
     ]
 
