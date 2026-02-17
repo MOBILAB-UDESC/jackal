@@ -34,7 +34,6 @@
     <xacro:arg name="initial_position" default="$(find ${arm_pkg})/config/initial_position.yaml" />
     <xacro:arg name="joint_limits" default="$(find ${arm_pkg})/config/joint_limits.yaml" />
     <xacro:include filename="$(find ${arm_pkg})/urdf/$(arg arm)_macro.urdf.xacro" />
-    <xacro:include filename="$(find ${arm_pkg})/urdf/macros.urdf.xacro" />
 
     <xacro:load_arm parent="$(arg prefix)mid_mount"
         prefix="$(arg arm_prefix)"
