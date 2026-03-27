@@ -5,6 +5,7 @@ from launch.actions import (
     EmitEvent,
     LogInfo,
     RegisterEventHandler,
+    TimerAction,
 )
 from launch.events import matches_action
 from launch.substitutions import (
@@ -28,6 +29,7 @@ def generate_launch_description():
         ('~/aligned_depth_to_color/image_raw/ffmpeg', 'depth/image/ffmpeg'),
         ('~/aligned_depth_to_color/image_raw/theora', 'depth/image/theora'),
         ('~/aligned_depth_to_color/image_raw/zstd', 'depth/image/zstd'),
+
         ('~/color/camera_info', 'rgb/camera_info'),
         ('~/color/image_raw', 'rgb/image'),
         ('~/color/image_raw/compressed', 'rgb/image/compressed'),
@@ -36,6 +38,7 @@ def generate_launch_description():
         ('~/color/image_raw/theora', 'rgb/image/theora'),
         ('~/color/image_raw/zstd', 'rgb/image/zstd'),
         ('~/color/metadata', 'rgb/metadata'),
+
         ('~/depth/camera_info', 'depth_raw/camera_info'),
         ('~/depth/image_rect_raw', 'depth_raw/image'),
         ('~/depth/image_rect_raw/compressed', 'depth_raw/image/compressed'),
@@ -45,6 +48,11 @@ def generate_launch_description():
         ('~/depth/image_rect_raw/zstd', 'depth_raw/image/zstd'),
         ('~/depth/metadata', 'depth_raw/metadata'),
         ('~/extrinsics/depth_to_color', 'extrinsics/depth_to_color'),
+
+        ('~/rgbd', 'rgbd'),
+        ('~/extrinsics/depth_to_depth', 'extrinsics/depth_to_depth'),
+
+        ('~/depth/color/points', 'points'),
     ]
 
     bringup_pkg_path = get_package_share_directory('jackal_bringup')
@@ -117,8 +125,31 @@ def generate_launch_description():
         remappings=camera_remappings
     )
 
+    camera_1_node = Node(
+        package='realsense2_camera',
+        executable='realsense2_camera_node',
+        name='camera_1_node',
+        namespace='camera_1',
+        parameters=[sensor_params],
+        output='screen',
+        arguments=[
+            '--ros-args',
+            '--log-level',
+            'info',
+        ],
+        emulate_tty=True,
+        remappings=camera_remappings
+    )
+
     nodes += [
-        camera_0_node
+        TimerAction(
+            period=5.0,
+            actions=[camera_0_node]
+        ),
+        TimerAction(
+            period=10.0,
+            actions=[camera_1_node]
+        ),
     ]
 
     args = [

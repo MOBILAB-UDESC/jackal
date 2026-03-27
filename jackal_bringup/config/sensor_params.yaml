@@ -39,35 +39,95 @@
 <robot_prefix>camera_0/camera_0_node:
   ros__parameters:
   # https://github.com/realsenseai/realsense-ros/blob/ros2-master/realsense2_camera/launch/rs_launch.py
-    camera_name: 'camera_0'
-    device_type: 'd435'
+    camera_name: camera_0
+    _device_type: d435
+    _usb_port_id: 2-3
+    serial_no: _246422071411
+    base_frame_id: link
+
+    camera_0_node.aligned_depth_to_color.image_raw.enable_pub_plugins:
+      - image_transport/compressedDepth
+      - image_transport/compressed
+      - image_transport/raw
+      # - image_transport/ffmpeg
+      # - image_transport/theora
+      # - image_transport/zstd
+    camera_0_node.color.image_raw.enable_pub_plugins:
+      - image_transport/compressedDepth
+      - image_transport/compressed
+      - image_transport/raw
+      # - image_transport/ffmpeg
+      # - image_transport/theora
+      # - image_transport/zstd
+    camera_0_node.depth.image_rect_raw.enable_pub_plugins:
+      - image_transport/compressedDepth
+      - image_transport/compressed
+      - image_transport/raw
+      # - image_transport/ffmpeg
+      # - image_transport/theora
+      # - image_transport/zstd
+    rgb_camera.color_profile: '640x480x30' # 640x480x30, 1280x720x30
+    depth_module.depth_profile: '640x480x30'
+
     enable_color: true
-    rgb_camera.color_profile: '1280x720x30' # 640x480x30
     enable_depth: true
+    enable_rgbd: true
+    enable_sync: true
+    align_depth.enable: true
+    align_depth.frames_queue_size: 16
+
     enable_infra: false
     enable_infra1: false
     enable_infra2: false
-    depth_module.depth_profile: '1280x720x30'
-    enable_rgbd: false
-    pointcloud.enable: false
-    enable_sync: true
-    align_depth.enable: true
+    enable_accel: false
+    enable_gyro: false
+    pointcloud.enable: true
     publish_tf: true
 
 # Attached to the arm (end-effector)
-<robot_prefix>camera_1/camera_1_node:
+<robot_prefix>arm_camera_1/camera_1_node:
   ros__parameters:
-    camera_name: 'camera_1'
-    device_type: 'd435'
+    camera_name: camera_1
+    _device_type: d435i
+    _usb_port_id: 1-4
+    serial_no: '_233522071012'
+    base_frame_id: link
+
+    camera_1_node.aligned_depth_to_color.image_raw.enable_pub_plugins:
+      - image_transport/compressedDepth
+      - image_transport/compressed
+      - image_transport/raw
+      # - image_transport/ffmpeg
+      # - image_transport/theora
+      # - image_transport/zstd
+    camera_1_node.color.image_raw.enable_pub_plugins:
+      - image_transport/compressedDepth
+      - image_transport/compressed
+      - image_transport/raw
+      # - image_transport/ffmpeg
+      # - image_transport/theora
+      # - image_transport/zstd
+    camera_1_node.depth.image_rect_raw.enable_pub_plugins:
+      - image_transport/compressedDepth
+      - image_transport/compressed
+      - image_transport/raw
+      # - image_transport/ffmpeg
+      # - image_transport/theora
+      # - image_transport/zstd
+    rgb_camera.color_profile: '640x480x15'
+    depth_module.depth_profile: '640x480x15'
+
     enable_color: true
-    rgb_camera.color_profile: '640x480x30'
     enable_depth: true
+    enable_rgbd: true
+    enable_sync: true
+    align_depth.enable: true
+    align_depth.frames_queue_size: 16
+
     enable_infra: false
     enable_infra1: false
     enable_infra2: false
-    depth_module.depth_profile: '640x480x30'
-    enable_rgbd: false
-    pointcloud.enable: false
-    enable_sync: true
-    align_depth.enable: true
+    enable_accel: false
+    enable_gyro: false
+    pointcloud.enable: true
     publish_tf: true
