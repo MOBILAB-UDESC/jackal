@@ -94,6 +94,8 @@ def launch_setup(context):
         )),
         condition=IfCondition(AndSubstitution(use_sim_time, NotSubstitution(test_urdf))),
         launch_arguments={
+            'arm': arm,
+            'arm_prefix': arm_prefix,
             'prefix': prefix,
             'robot_name': robot_name,
             'use_sim_time': use_sim_time,
@@ -103,22 +105,6 @@ def launch_setup(context):
             'Y': LaunchConfiguration('Y')
         }.items()
     )
-
-    if arm.perform(context):
-        arm_sensors_bridge = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(PathJoinSubstitution(
-                [get_package_share_directory('arms_bringup'), 'launch', 'arm_gazebo_launch.py']
-            )),
-            condition=IfCondition(AndSubstitution(use_sim_time, NotSubstitution(test_urdf))),
-            launch_arguments={
-                'prefix': arm_prefix,
-                'has_base': 'true',
-                'use_camera': 'true',
-            }.items()
-        )
-
-        # Arm's sensors in simulation
-        nodes += [arm_sensors_bridge]
 
     # imu_filter_config = ReplaceString(
     #     source_file=PathJoinSubstitution([bringup_pkg_path, 'config', 'imu_filter.yaml']),

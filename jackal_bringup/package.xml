@@ -38,12 +38,12 @@
   <exec_depend>clearpath_hardware_interfaces</exec_depend>
 
   <!-- Optional packages -->
-  <exec_depend>gen3_lite_description</exec_depend>
+  <!-- <exec_depend>gen3_lite_description</exec_depend>
   <exec_depend>kinova_2f_lite_description</exec_depend>
   <exec_depend>unitree_d1_description</exec_depend>
   <exec_depend>d1_2f_description</exec_depend>
   <exec_depend>unitree_z1_description</exec_depend>
-  <exec_depend>z1_1f_description</exec_depend>
+  <exec_depend>z1_1f_description</exec_depend> -->
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
