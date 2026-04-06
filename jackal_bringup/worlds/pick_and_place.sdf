@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <sdf version='1.10'>
-  <world name='empty'>
+  <world name='AppleOrchardWorld'>
     <physics name='1ms' type='ignored'>
       <max_step_size>0.005</max_step_size>
       <real_time_factor>1</real_time_factor>
@@ -22,6 +22,17 @@
       <background>0.699999988 0.699999988 0.699999988 1</background>
       <shadows>true</shadows>
     </scene>
+
+    <!-- CUSTOM PLUGINS -->
+    <plugin filename="StemBreakPlugin" name="mobi_plugins::StemBreakPlugin">
+      <break_threshold>10</break_threshold>
+      <stem_joint_name_prefix>apple_stem_joint</stem_joint_name_prefix>
+      <scan_for_new_stem_joints>true</scan_for_new_stem_joints>
+      <apple_model_prefix>Apple_</apple_model_prefix>
+      <stem_link>apple_stem_link</stem_link>
+      <tree_model>ApplePlant_1</tree_model>
+      <tree_link>apple_plant_link</tree_link>
+    </plugin>
 
     <model name='ground_plane'>
       <static>true</static>
@@ -74,36 +85,75 @@
     </model>
 
     <include>
-      <uri>model://Desk</uri>
-      <name>Desk</name>
-      <pose>-0.61051899194717407 -0.052281398326158524 -0.3431679904460907 0 0 0</pose>
+      <uri>model://ApplePlant</uri>
+      <name>ApplePlant_1</name>
+      <pose>-1 0 -0.221946 0 0 1.570796327</pose>
+    </include>
+
+    <include>
+      <uri>model://Apple</uri>
+      <name>Apple_0</name>
+      <pose>-1.096130 -0.445226 0.572104 -0.625750 -0.000001 0</pose>
     </include>
 
     <include>
       <uri>model://Apple</uri>
       <name>Apple_1</name>
-      <pose>-0.45895401909430905 0.35794574792405282 0.41283330057929907 8.0189583308926796e-05 -5.9404955287907795e-05 -0.0015560274160854579</pose>
-    </include>
-    <include>
-      <uri>model://Apple</uri>
-      <name>Apple_2</name>
-      <pose>-0.68318080713447227 -0.057693143782916012 0.41283644260904162 1.9544783379680246e-06 8.49480859011617e-05 -0.0015599957305305126</pose>
-    </include>
-    <include>
-      <uri>model://Apple</uri>
-      <name>Apple_3</name>
-      <pose>-0.75023122361803107 0.306123798607144 0.44285888036145116 -0.62814733611949558 -1.2447212799398448 0.48793997853593757</pose>
-    </include>
-    <include>
-      <uri>model://Apple</uri>
-      <name>Apple_4</name>
-      <pose>-0.4346889765427091 -0.1450643761952897 0.41283611648910695 1.0900684345080345e-05 6.6609002578958001e-05 -0.0056708672175723902</pose>
+      <pose>-0.700618 0.193615 0.487739 0 -0.782251 0.563845</pose>
     </include>
 
     <include>
-      <uri>model://TrashBin</uri>
-      <name>TrashBin</name>
-      <pose>-0.00035993671411771455 -0.54213608489045662 0 0 0 0</pose>
+      <uri>model://Apple</uri>
+      <name>Apple_2</name>
+      <pose>-0.852326 0.116601 0.413124 0 0 0.0</pose>
+    </include>
+
+    <include>
+      <uri>model://Apple</uri>
+      <name>Apple_3</name>
+      <pose>-0.86071 0.233721 0.675750 0.868257 -0.346050 -0.381119</pose>
+    </include>
+
+    <include>
+      <uri>model://Apple</uri>
+      <name>Apple_4</name>
+      <pose>-0.773069 0.232495 0.583370 0.000099 -0.525662 1.639110</pose>
+    </include>
+
+    <include>
+      <uri>model://Apple</uri>
+      <name>Apple_5</name>
+      <pose>-0.924279 0.261503 0.697834 0.0 -0.0 -0.0</pose>
+    </include>
+
+    <include>
+      <uri>model://Apple</uri>
+      <name>Apple_6</name>
+      <pose>-0.889145 0.471669 0.510234 0.0 -0.0 -0.0</pose>
+    </include>
+
+    <include>
+      <uri>model://Apple</uri>
+      <name>Apple_7</name>
+      <pose>-0.704417 -0.068454 0.402718 0.0 -0.0 -0.0</pose>
+    </include>
+
+    <include>
+      <uri>model://Apple</uri>
+      <name>Apple_8</name>
+      <pose>-0.678500 -0.183603 0.390340 0.0 -0.0 -0.0</pose>
+    </include>
+
+    <include>
+      <uri>model://Apple</uri>
+      <name>Apple_9</name>
+      <pose>-0.845943 -0.160451 0.537163 0.0 -0.0 -0.0</pose>
+    </include>
+
+    <include>
+      <uri>model://Apple</uri>
+      <name>Apple_10</name>
+      <pose>-0.722231 -0.212508 0.700984 0.0 -0.0 -0.0</pose>
     </include>
 
     <light name='sun' type='directional'>
